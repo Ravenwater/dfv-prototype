@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Stillwater Domain Flow Visualization</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel=stylesheet href="css/base.css"/>
+</head>
+<body>
+
+<script src="js/Three.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/Stats.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+
+<!-- combinatorial geometry -->
+<script src="js/numeric-1.2.6.js"></script>
+<script src="js/KPU.Polyline.js"></script>
+<script src="js/KPU.domain.js"></script>
+<script src="js/KPU.wavefront.js"></script>
+
+<!-- jQuery code to display an information button and box when clicked. -->
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/jquery-ui.js"></script>
+<link rel=stylesheet href="css/jquery-ui.css" />
+<link rel=stylesheet href="css/info.css"/>
+<script src="js/info.js"></script>
+<div id="infoButton"></div>
+<div id="infoBox" title="Domain Flow Visualization">
+Visualization of the dynamics of parallel algorithms for the Stillwater KPU.
+<br><center>
+<a href="http://www.stillwater-sc.com/">Stillwater Supercomputing, Inc./</a>
+</center>
+</div>
+<!-- ------------------------------------------------------------ -->
+
+<div id="DFV" style="position: absolute; left:0px; top:0px"></div>
+<script>
+// MAIN
+
+// standard global variables
+var container, scene, camera, renderer, controls, stats;
+var keyboard = new THREEx.KeyboardState();
+var clock = new THREE.Clock();
+
+// custom global variables
+var points = [];
+var values = [];
+var size;
+
+init();
+animate();
+
+// FUNCTIONS 		
+function init() 
+{
+	// SCENE
+	scene = new THREE.Scene();
+	// CAMERA
+	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+	scene.add(camera);
+	camera.position.set(20,20,60);
+	camera.lookAt(scene.position);	
+	// RENDERER
+	if ( Detector.webgl )
+		renderer = new THREE.WebGLRenderer( {antialias:true} );
+	else
+		renderer = new THREE.CanvasRenderer(); 
+	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	container = document.getElementById( 'DFV' );
+	container.appendChild( renderer.domElement );
+	// EVENTS
+	THREEx.WindowResize(renderer, camera);
+	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+	// CONTROLS
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+	// STATS
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.bottom = '0px';
+	stats.domElement.style.zIndex = 100;
+	container.appendChild( stats.domElement );
+	// LIGHT
+	var light = new THREE.PointLight(0xffffff);
+	light.position.set(0,10,0);
+	scene.add(light);
+	 
+	// Axis
+	scene.add( new THREE.AxisHelper(50) );
+
+	////////////////////////////////////////////////
+	// Visualization of the Domain of Computation //
+	////////////////////////////////////////////////
+
+	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
+	var doCs = new KPU.domain();
+    doCs.generatePolylines();
+
+    // create the geometry object
+	for (i = 0; i < doCs.getNrOfPolylines(); i++) {
+	    var polylineGeometry = new THREE.Geometry();
+	    var polyline = doCs.getPolyline(i);
+	    for (j = 0; j < polyline.vertices.length; j++) {
+            var v = polyline.v(j);
+            polylineGeometry.vertices.push(new THREE.Vector3(v[0], v[1], v[2]));
+	    }
+	    var polygon = new THREE.Line( polylineGeometry, lineMaterial );
+	    scene.add(polygon);
+	}
+
+}
+
+function animate() 
+{
+    requestAnimationFrame( animate );
+	render();		
+	update();
+}
+
+function update()
+{
+	controls.update();
+	stats.update();
+}
+
+function render() 
+{
+	renderer.render( scene, camera );
+}
+
+</script>
+
+</body>
+</html>

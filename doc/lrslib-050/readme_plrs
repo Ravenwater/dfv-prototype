@@ -1,0 +1,20 @@
+Setup instructions for plrs.
+
+1. Install boost library from http://www.boost.org/ into prefix/boost151
+
+If you haver root permission, prefix=/usr/include
+However you can install boost locally wherever you like.
+ 
+Instructions for installing the library are located here 
+http://www.boost.org/doc/libs/1_51_0/more/getting_started/unix-variants.html. 
+Look at section 5 for an easy install. 
+***Important: make a note of the path given at the end of the install process ****
+
+2. After the boost library is installed merge the contents of boost-atomic directory (included in lrslib-050) 
+with the corresponding directories in your boost prefix/include/boost151 directory.
+
+3. Update the makefile to include the paths you recorded in step 1. 
+ "make plrs" will make plrs with the gmp library (assuming the gmp library is already installed on that machine). 
+ "make plrsmp" will make plrs with the standard lrsmp arithmetic library and plrs1 with the long integer library. 
+
+

@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="Content-Type">
+  <title>Computing lex-positive bases</title>
+</head>
+<body>
+<h2><span style="font-weight: bold;">Computing all lex-positive bases
+representing a given vertex</span></h2>
+For details about lrs options visit:&nbsp;&nbsp; <a
+ href="http://cgm.cs.mcgill.ca/%7Eavis/C/lrslib/USERGUIDE.html">http://cgm.cs.mcgill.ca/~avis/C/lrslib/USERGUIDE.html<br>
+</a><br>
+Let us start with a cross polytope in 4 dimensions. <br>
+<br>
+<span style="color: rgb(0, 0, 153);">sony% cat cross4.ine</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">cross<br>
+H-representation</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">begin</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">16 5 rational</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; 1&nbsp; 1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; -1&nbsp; 1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; 1&nbsp; -1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; -1&nbsp; -1&nbsp;
+1</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; 1&nbsp; 1&nbsp; -1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; -1&nbsp; 1&nbsp;
+-1</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; 1&nbsp; -1&nbsp;
+-1</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; -1&nbsp; -1&nbsp; -1&nbsp;
+-1</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; 1&nbsp; 1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; -1&nbsp; 1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; 1&nbsp; -1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; -1&nbsp; -1&nbsp; 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; 1&nbsp; 1&nbsp; -1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; -1&nbsp; 1&nbsp; -1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; 1&nbsp; -1&nbsp; -1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">1&nbsp; 1&nbsp; -1&nbsp; -1&nbsp;
+-1</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">end</span><br>
+<br>
+If you run lrs on this file you see that it is degenerate with each of
+its 8 vertices having 6 lex-pos bases.<br>
+<br>
+1. We select vertex&nbsp;&nbsp; 0 1 0 0 and ask for all lex-pos bases
+that contain it. <br>
+It is contained on 8 facets in the file cross4.ine: all of the facets
+with a +1 in column 3.<br>
+Add the normals of these facets together to get an objective function
+z= 8 x2&nbsp; that maximizes at 0 1 0 0.<br>
+<br>
+2. Now run lrs in linear programming mode to get a lex-pos basis for
+the vertex 0 1 0 0.<br>
+To do this add the following 3 lines to the end of cross4.ine<br>
+<br>
+<span style="color: rgb(0, 0, 153);">maximize 0 0 8 0 0</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">lponly</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">printcobasis 1</span><br>
+<br>
+Running lrs we get:<br>
+<br>
+<span style="color: rgb(0, 0, 153);">sony% lrs cross4.ine</span><br
+ style="color: rgb(0, 0, 153);">
+<br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*lrs:lrslib v.4.2c,
+2010.7.7(32bit,lrsmp.h)</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*Copyright (C) 1995,2010, David
+Avis&nbsp;&nbsp; avis@cs.mcgill.ca </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*Input taken from file cross4.ine</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">cross</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*maximize:&nbsp;&nbsp; 0&nbsp;
+0&nbsp; 8&nbsp; 0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*printcobasis 1</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#1 R#0 B#1 h=0 facets&nbsp; 8 10
+12 14 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*LP solution only requested</span><br>
+<br>
+3. We now use the cobasis&nbsp; 8 10 12 14 to do an lrs run on
+cross4.ine with the truncate option. <br>
+Replace the three options for the lp only run with:<br>
+<br>
+<span style="color: rgb(0, 0, 153);">startingcobasis 8 10 12 14</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">allbases</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">printcobasis 1</span><br>
+<span style="color: rgb(0, 0, 153);">truncate</span><br>
+<br>
+<br>
+Run lrs and you get the following output:<br>
+<span style="color: rgb(0, 0, 153);">sony% lrs cross4.ine</span><br>
+<span style="color: rgb(0, 0, 153);">*truncate</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V-representation</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">begin</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">***** 5 rational</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#1 R#0 B#1 h=0 facets&nbsp; 8 10
+12 14 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#2 R#0 B#2 h=1 facets&nbsp; 8 12
+14 16 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#3 R#0 B#3 h=2 facets&nbsp; 8 12
+15 16 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 0&nbsp;
+1&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#4 R#0 B#4 h=2 facets&nbsp; 12 14
+15 16 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1 -1&nbsp; 0&nbsp; 0&nbsp; 0
+</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#5 R#0 B#5 h=2 facets&nbsp; 8 14
+15 16 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 0&nbsp;
+0&nbsp; 1 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#6 R#0 B#6 h=1 facets&nbsp; 4 8
+10 12 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#7 R#0 B#7 h=1 facets&nbsp; 10 12
+14 15 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1 -1&nbsp; 0&nbsp; 0&nbsp; 0
+</span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#8 R#0 B#8 h=1 facets&nbsp; 6 8
+10 14 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#9 R#0 B#9 h=2 facets&nbsp; 4 6 8
+10 I#8 det= 8&nbsp; in_det= 8 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">V#10 R#0 B#10 h=3 facets&nbsp; 2 4
+6 10 I#8 det= 8&nbsp; in_det= 8 </span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">&nbsp;1&nbsp; 0&nbsp; 1&nbsp;
+0&nbsp; 0 </span><br style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">end</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*Tree truncated at each new vertex</span><br
+ style="color: rgb(0, 0, 153);">
+<span style="color: rgb(0, 0, 153);">*Totals: vertices=10 rays=0
+bases=10 integer_vertices=4 </span><br style="color: rgb(0, 0, 153);">
+<br style="color: rgb(0, 0, 153);">
+<br>
+4. You obtain a list of the 6 lex-pos cobases that represent 0 1 0 0
+and
+also 4 other cobases that you simply discard.<br>
+The reverse search tree corresponding to step 3 is below. <br>
+To see how it is constructed, note it is a depth first search tree
+based on the height parameter h=integer in the above output.<br>
+Note that their are 6 vertices adjacent to 0 1 0 0 on the polytope of
+which 3 are computed, and one, (-1,0,0,0) appears twice.<br>
+So this is not equivalent to computing the vertex figure at 0 1 0 0.<br>
+<img style="width: 493px; height: 296px;" alt="reverse search tree"
+ src="rst.jpg"><br>
+<br style="color: rgb(0, 0, 153);">
+<br>
+To understand this tree, it is useful to compute all lex-pos bases of
+the polytope by running step 3 with 'truncate' removed. <br>
+In the full reverse search tree containing 48 notes, we see that the
+cobases 4 8 10 12&nbsp; and 2 4 6 10 are leaves of the tree, so no
+truncation is performed.<br>
+The remaining 38 nodes of the tree are all in subtrees of the truncated
+vertices. The maximum depth is 8.<br>
+(If anyone cares to draw this tree and send it to me, I am happy to
+post it :-)&nbsp; )<br>
+</body>
+</html>
