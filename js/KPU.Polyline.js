@@ -5,21 +5,31 @@
 // # Code
 
 /** @namespace */
-var KPU		= KPU 		|| {};
+var KPU	    	= KPU    		|| {};
 KPU.Polyline	= KPU.Polyline	|| function() {
     this.vertices = []
 };
 
+/**
+ *
+ * @type {{v: v, dup: dup, push: push}}
+ */
 KPU.Polyline.prototype = {
     v: function(index) {
         return this.vertices[index];
     },
+
     dup: function() {
-	return KPU.Polyline.create(this.vertices);
+	    return KPU.Polyline.create(this.vertices);
     },
+
     push: function(object) {
-	this.vertices.push(object);
-	return this.vertices.length;
+	    this.vertices.push(object);
+	    return this.vertices.length;
+    },
+
+    sort: function() {
+
     }
 };
 

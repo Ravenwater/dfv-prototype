@@ -6,3 +6,35 @@ body
 	margin: 0px;
 	overflow: hidden;
 }
+
+.container {
+    display: -webkit-flex;
+    display: flex;
+}
+.section_border {
+    border-style: groove;
+    border-width: 2px;
+}
+.code_section {
+    -webkit-flex: initial;
+    flex: initial;
+    width: 300px;
+    min-width: 200px;
+}
+.viz_section {
+    -webkit-flex: 1;
+    flex: 1;
+    height: 600px;
+}
+.debug_section {
+    -webkit-flex: 1;
+    flex: 1;
+}
+.space_section {
+    -webkit-flex: 1;
+    flex: 1;
+}
+.time_section {
+    -webkit-flex: 1;
+    flex: 1;
+}

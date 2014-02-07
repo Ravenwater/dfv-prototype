@@ -15,7 +15,7 @@ KPU.domain	= KPU.domain || function() {
     /**
      * constrainSet captures the Ax - b <= 0 constraints in the form { A:A, b:b }
     **/
-    this.constraintSet = {};
+    this.constraintSet = {A:[], b:[]};
     /**
      * polylineSet captures the polygon representation of each constraint
     **/
@@ -51,55 +51,64 @@ KPU.domain	= KPU.domain || function() {
      * by the sequence: [1,2,3] -> [1,2,6] -> [1,5,6] -> [1,5,3] -> [1,2,3]
     **/
 
-    this.setConstraintSet([ [-1,  0,  0],
-                       [ 0, -1,  0],
-        		       [ 0,  0, -1],
-        		       [ 1,  0,  0],
-        		       [ 0,  1,  0],
-        	           [ 0,  0,  1]],
-                       [-1, -1, -1, 10, 10, 10]);
-
-	var polyline = new KPU.Polyline();
-	polyline.push( [   1,  1, 1 ] );
-	polyline.push( [  10,  1, 1 ] );
-	polyline.push( [  10, 10, 1 ] );
-	polyline.push( [   1, 10, 1 ] );
-	polyline.push( [   1,  1, 1 ] );
-	this.polylineSet.push(polyline);
-
-	var polyline = new KPU.Polyline();
-	polyline.push( [   1,  1, 10 ] );
-	polyline.push( [  10,  1, 10 ] );
-	polyline.push( [  10, 10, 10 ] );
-	polyline.push( [   1, 10, 10 ] );
-	polyline.push( [   1,  1, 10 ] );
-	this.polylineSet.push(polyline);
 };
 
 KPU.domain.version = "1.0.0";
 
 KPU.domain.prototype = {
+
     /**
-     * return the number of polylines confining the convex hull of
-     * the domain of computation represented by this KPU.domain object
-     * 
-     * @returns {Integer} number of polylines 
-    **/
-    getNrOfPolylines: function() {
-	    return this.polylineSet.length;
-    },
-
-    setConstraintSet: function ( A, b ) {
+     * set the complete constraint set defined by Ax <= b
+     * @param A: constraint matrix
+     * @param b: constraint rhs
+     * For example, the constraint set Ax = b, representing a 3D CUBE
+     * defined by the set ( (i,j,k) | 1 <= i,j,k <= N )
+     * A =[ [-1,  0,  0],
+     *      [ 0, -1,  0],
+     *      [ 0,  0, -1],
+     *      [ 1,  0,  0],
+     *      [ 0,  1,  0],
+     *      [ 0,  0,  1]], and
+     * b = [ -1, -1, -1, N, N, N ],
+     */
+    setConstraintSet: function ( dim, A, b ) {
         this.constraintSet = { A: A, b:b };
-	    this.dim = this.constraintSet.A[0].lenght;
+	    this.dim = dim;
     },
-
+    /**
+     * set an individual constraint
+     * @param id: ordinal of the constraint
+     * @param dim: dimension of the constraint
+     * @param constraint: the constraint vector
+     * @param rhs: the constraint rhs
+     */
+    setConstraint: function ( id, cnstrnt, rhs) {
+            if (this.dim === 0 || this.dim === cnstrnt.dim) {
+                this.dim = cnstrnt.dim;
+                this.constraintSet.A[id] = cnstrnt;
+                this.constraintSet.b[id] = rhs;
+            } else {
+                console.error("inconsistent dimension of new constraint: constraint is ignored");
+            }
+    },
     getConstraint: function ( id ) {
 	    return this.constraintSet.A[id];
     },
 
+    /**
+     * return the number of polylines confining the convex hull of
+     * the domain of computation represented by this KPU.domain object
+     *
+     * @returns {Integer} number of polylines
+     **/
+    getNrOfPolylines: function() {
+        return this.polylineSet.length;
+    },
     getPolyline: function ( id ) {
-	    return this.polylineSet[id];
+	    return {
+            dim: this.dim,
+            vrtxArray: this.polylineSet[id]
+        }
     },
 
     /**
@@ -110,8 +119,8 @@ KPU.domain.prototype = {
         /**
          * we are going to visit all the vertices once,
          * accumulate the vertices with enough information
-         * that we can sort them in a second pass into
-         * polylines.
+         * so that we can sort them in a second pass into
+         * a set of polylines, one for each constraint.
          */
         var A, b, Ai, Aj, Ak, bi, bj, bk, i, j, k, solution, x;
         A = this.constraintSet.A;
@@ -130,17 +139,17 @@ KPU.domain.prototype = {
                     console.log('A[',i,']= [',A[i][0],A[i][1],A[i][2],']')
                 }
                 for (i = 0; i < nrOfConstraints-2; ++i) {
-                    Ai = A[i]
-                    bi = b[i]
+                    Ai = A[i];
+                    bi = b[i];
                     for (j = i + 1; j < nrOfConstraints-1; ++j) {
-                        Aj = A[j]
-                        bj = b[j]
+                        Aj = A[j];
+                        bj = b[j];
                         for (k = j + 1; k < nrOfConstraints; ++k) {
-                            Ak = A[k]
-                            bk = b[k]
-                            A_v = [ Ai, Aj, Ak]
-                            b_v = [ bi, bj, bk]
-                            var solution = KPU.LU(A_v)
+                            Ak = A[k];
+                            bk = b[k];
+                            A_v = [ Ai, Aj, Ak];
+                            b_v = [ bi, bj, bk];
+                            var solution = KPU.LU(A_v);
                             if (solution.fullRank) {
                                 x = numeric.LUsolve(solution,b_v);
                                 console.log ('x[] = [', x[0],x[1],x[2], ']')
@@ -153,6 +162,22 @@ KPU.domain.prototype = {
                 }
             }
         }
+
+        var polyline = [];
+        polyline.push( [   1,  1, 1 ] );
+        polyline.push( [  10,  1, 1 ] );
+        polyline.push( [  10, 10, 1 ] );
+        polyline.push( [   1, 10, 1 ] );
+        polyline.push( [   1,  1, 1 ] );
+        this.push(polyline);
+
+        polyline = [];
+        polyline.push( [   1,  1, 10 ] );
+        polyline.push( [  10,  1, 10 ] );
+        polyline.push( [  10, 10, 10 ] );
+        polyline.push( [   1, 10, 10 ] );
+        polyline.push( [   1,  1, 10 ] );
+        this.push(polyline);
     },
 
     push: function(object) {

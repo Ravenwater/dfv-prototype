@@ -3,7 +3,6 @@
 <head>
 	<title>Stillwater Domain Flow Visualization</title>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link rel=stylesheet href="css/base.css"/>
 </head>
 <body>
@@ -22,21 +21,40 @@
 <script src="js/KPU.domain.js"></script>
 <script src="js/KPU.wavefront.js"></script>
 
-<!-- jQuery code to display an information button and box when clicked. -->
-<script src="js/jquery-1.9.1.js"></script>
-<script src="js/jquery-ui.js"></script>
-<link rel=stylesheet href="css/jquery-ui.css" />
-<link rel=stylesheet href="css/info.css"/>
-<script src="js/info.js"></script>
-<div id="infoButton"></div>
-<div id="infoBox" title="Domain Flow Visualization">
-Visualization of the dynamics of parallel algorithms for the Stillwater KPU.
-<br><center>
-<a href="http://www.stillwater-sc.com/">Stillwater Supercomputing, Inc./</a>
-</center>
-</div>
 <!-- ------------------------------------------------------------ -->
+<div class="container">
 
+    <section class="section_border code_section">
+        <pre>
+ system( (i,j,k) | 1 <= i,j,k <= N ) {
+    a(i,j,k) = a(i-1,j,k);
+    b(i,j,k) = b(i,j-1,k);
+    c(i,j,k) = a(i-1,j,k)*b(i,j-1,k) + c(i,j,k-1);
+ }
+        </pre>
+    </section>
+
+    <section id="DFV_s" class="section_border viz_section"></section>
+</div>
+<div class="container">
+    <section class="section_border space_section">
+        <p>
+            Space projection control
+        </p>
+    </section>
+    <section class="section_border time_section">
+        <p>
+            Time/schedule control
+        </p>
+    </section>
+</div>
+<div class="container">
+    <section class="section_border debug_section">
+        <p>
+            Debug Window
+        </p>
+    </section>
+</div>
 <div id="DFV" style="position: absolute; left:0px; top:0px"></div>
 <script>
 // MAIN
@@ -50,17 +68,58 @@ var clock = new THREE.Clock();
 var points = [];
 var values = [];
 var size;
+var fullWindow = false;
+var SCREEN_WIDTH, SCREEN_HEIGHT;
 
-init();
+var doCs = new KPU.domain();
+
+initDFM();  // initialize the Domain Flow Model
+initUI();
 animate();
 
-// FUNCTIONS 		
-function init() 
+// FUNCTIONS
+/**
+ * initialize the Domain Flow Model
+ * The model consists of
+ * 1- a set of constraints defining the domains of computation,
+ * 2- a spacetime mapping consisting of a schedule function and a space projection,
+ * 3- a set of affine dependencies describing data dependencies between computational events
+ **/
+function initDFM()
 {
-	// SCENE
+    /*
+    doCs.setConstraintSet(3,  [ [-1,  0,  0],
+                                [ 0, -1,  0],
+                                [ 0,  0, -1],
+                                [ 1,  0,  0],
+                                [ 0,  1,  0],
+                                [ 0,  0,  1]],
+                          [-1, -1, -1, 10, 10, 10]);
+    */
+    doCs.setConstraint(0, [-1, 0, 0], -1);
+    doCs.setConstraint(1, [ 0,-1, 0], -1);
+    doCs.setConstraint(2, [ 0, 0,-1], -1);
+    doCs.setConstraint(3, [ 1, 0, 0], 10);
+    doCs.setConstraint(4, [ 0, 1, 0], 10);
+    doCs.setConstraint(5, [ 0, 0, 1], 10);
+    doCs.generatePolylines();
+}
+
+function initUI()
+{
+    // SCENE
 	scene = new THREE.Scene();
 	// CAMERA
-	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+    if (fullWindow) {
+        container = document.getElementById( 'DFV' );
+        SCREEN_WIDTH = window.innerWidth;
+        SCREEN_HEIGHT = window.innerHeight;
+    } else {
+        container = document.getElementById( 'DFV_s' );
+        SCREEN_WIDTH = container.offsetWidth;
+        SCREEN_HEIGHT = container.offsetHeight;
+    }
+    console.log('viewport = (' + SCREEN_WIDTH + "x" + SCREEN_HEIGHT + ')');
 	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
 	scene.add(camera);
@@ -72,10 +131,9 @@ function init()
 	else
 		renderer = new THREE.CanvasRenderer(); 
 	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	container = document.getElementById( 'DFV' );
 	container.appendChild( renderer.domElement );
 	// EVENTS
-	THREEx.WindowResize(renderer, camera);
+	MyWindowResize(renderer, camera);
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
 	// CONTROLS
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
@@ -98,21 +156,50 @@ function init()
 	////////////////////////////////////////////////
 
 	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-	var doCs = new KPU.domain();
-    doCs.generatePolylines();
 
     // create the geometry object
-	for (i = 0; i < doCs.getNrOfPolylines(); i++) {
+    var nrOfFaces = doCs.getNrOfPolylines();
+    var face;
+	for (face = 0; face < nrOfFaces; face++) {
 	    var polylineGeometry = new THREE.Geometry();
-	    var polyline = doCs.getPolyline(i);
-	    for (j = 0; j < polyline.vertices.length; j++) {
-            var v = polyline.v(j);
+	    var polyline = doCs.getPolyline(face); // polyline = {dim:dim, vrtxArray:vertices}
+        var vertexId;
+	    for (vertexId = 0; vertexId < polyline.vrtxArray.length; vertexId++) {
+            var v = polyline.vrtxArray[vertexId];
             polylineGeometry.vertices.push(new THREE.Vector3(v[0], v[1], v[2]));
 	    }
 	    var polygon = new THREE.Line( polylineGeometry, lineMaterial );
 	    scene.add(polygon);
 	}
+}
 
+function MyWindowResize(renderer, camera){
+    var callback	= function(){
+        // notify the renderer of the size change
+        if (fullWindow) {
+            SCREEN_WIDTH  = window.innerWidth;
+            SCREEN_HEIGHT = window.innerHeight;
+        } else {
+            SCREEN_WIDTH  = container.offsetWidth;
+            SCREEN_HEIGHT = container.offsetHeight;
+        }
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        console.log('viewport = (' + SCREEN_WIDTH + "x" + SCREEN_HEIGHT + ')');
+                // update the camera
+        camera.aspect	= SCREEN_WIDTH / SCREEN_HEIGHT;
+        camera.updateProjectionMatrix();
+    }
+    // bind the resize event
+    window.addEventListener('resize', callback, false);
+    // return .stop() the function to stop watching window resize
+    return {
+        /**
+         * Stop watching window resize
+         */
+        stop	: function(){
+            window.removeEventListener('resize', callback);
+        }
+    };
 }
 
 function animate() 

@@ -18,6 +18,10 @@ Read more at http://www.stillwater-sc.com/tour.html
 
 # Getting started
 
-Right now the prototype is just a handrolled web page calling JS libraries to create the first visualizations. Simply open the domain-flow.html page to experiment with the raw components.
+Right now the prototype is just a handrolled web page calling JS libraries to create the first visualizations.
+Simply open the domain-flow.html page to experiment with the raw components.
 
-Inspired by JSFiddle and CodePen, we want to wrap this into a NEAM stack to create a productive environment in which the community can collaborative design and fine-tune complex domain flow programs. To execute domain flow programs, we will create a run-time that allows software emulation, but the end goal is to create a WebGL-like stack for hardware acceleration on a Stillwater KPU platform.
+Inspired by JSFiddle and CodePen, we want to wrap this into a NEAM stack to create a productive environment in which
+the community can collaborative design and fine-tune complex domain flow programs. To execute domain flow programs,
+we will create a run-time that allows software emulation, but the end goal is to create a WebGL-like stack for
+hardware acceleration on a Stillwater KPU platform.
