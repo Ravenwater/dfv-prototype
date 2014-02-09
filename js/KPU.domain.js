@@ -71,9 +71,9 @@ KPU.domain.prototype = {
      *      [ 0,  0,  1]], and
      * b = [ -1, -1, -1, N, N, N ],
      */
-    setConstraintSet: function ( dim, A, b ) {
+    setConstraintSet: function ( A, b ) {
         this.constraintSet = { A: A, b:b };
-	    this.dim = dim;
+	    this.dim = A[0].length;
     },
     /**
      * set an individual constraint
@@ -83,8 +83,8 @@ KPU.domain.prototype = {
      * @param rhs: the constraint rhs
      */
     setConstraint: function ( id, cnstrnt, rhs) {
-            if (this.dim === 0 || this.dim === cnstrnt.dim) {
-                this.dim = cnstrnt.dim;
+            if (this.dim === 0 || this.dim === cnstrnt.length) {
+                this.dim = cnstrnt.length;
                 this.constraintSet.A[id] = cnstrnt;
                 this.constraintSet.b[id] = rhs;
             } else {
@@ -94,7 +94,6 @@ KPU.domain.prototype = {
     getConstraint: function ( id ) {
 	    return this.constraintSet.A[id];
     },
-
     /**
      * return the number of polylines confining the convex hull of
      * the domain of computation represented by this KPU.domain object
@@ -122,22 +121,28 @@ KPU.domain.prototype = {
          * so that we can sort them in a second pass into
          * a set of polylines, one for each constraint.
          */
-        var A, b, Ai, Aj, Ak, bi, bj, bk, i, j, k, solution, x;
+        var A, b, Ai, Aj, Ak, bi, bj, bk, i, j, k, solution;
+        var index = []; // constraint set index, and
+        var x = [];     // solution defining the vertex of above constraints
+        var vertices = [];
+        var vertex_id = 0;
         A = this.constraintSet.A;
         b = this.constraintSet.b;
         var nrOfConstraints = A.length;
         var dimensionality = A[0].length;
-        var A_v; // the matrix that defines a vertex of the convex hull
-        var b_v;
+        var A_v, b_v; // the matrix and vector that define a vertex of the convex hull
+        // create the vertexSet structure
+        var indexSet = new Array();
+        for (i = 0; i < nrOfConstraints; i++) {
+            indexSet[i] = new Array();
+        }
         switch (dimensionality) {
             case 1:{
             }
             case 2:{
             }
             case 3: {
-                for (i = 0; i < nrOfConstraints; ++i){
-                    console.log('A[',i,']= [',A[i][0],A[i][1],A[i][2],']')
-                }
+                // for (i = 0; i < nrOfConstraints; ++i)console.log('A[',i,']= [',A[i][0],A[i][1],A[i][2],']')
                 for (i = 0; i < nrOfConstraints-2; ++i) {
                     Ai = A[i];
                     bi = b[i];
@@ -152,10 +157,15 @@ KPU.domain.prototype = {
                             var solution = KPU.LU(A_v);
                             if (solution.fullRank) {
                                 x = numeric.LUsolve(solution,b_v);
-                                console.log ('x[] = [', x[0],x[1],x[2], ']')
+                                index = [i, j, k];
+                                vertices[vertex_id++] = { index:index, vertex:x };
+                                indexSet[i].push(index);
+                                indexSet[j].push(index);
+                                indexSet[k].push(index);
+                                //console.log ('x[] = [', x[0],x[1],x[2], ']')
                             }
                             else {
-                                console.log ('A is singular for [',i,j,k,']')
+                                //console.log ('A is singular for [',i,j,k,']')
                             }
                         }
                     }
@@ -163,25 +173,127 @@ KPU.domain.prototype = {
             }
         }
 
-        var polyline = [];
-        polyline.push( [   1,  1, 1 ] );
-        polyline.push( [  10,  1, 1 ] );
-        polyline.push( [  10, 10, 1 ] );
-        polyline.push( [   1, 10, 1 ] );
-        polyline.push( [   1,  1, 1 ] );
-        this.push(polyline);
+        for ( i in vertices) {
+            console.log(vertices[i].index + ' associated with ' + vertices[i].vertex);
+        }
 
-        polyline = [];
-        polyline.push( [   1,  1, 10 ] );
-        polyline.push( [  10,  1, 10 ] );
-        polyline.push( [  10, 10, 10 ] );
-        polyline.push( [   1, 10, 10 ] );
-        polyline.push( [   1,  1, 10 ] );
-        this.push(polyline);
+        /* In order to create a proper visualization of each half plane constraint
+         * we need to order the index sets for each vertex in such a way that two
+         * vertices are adjacent if and only if they differ in just one constraint.
+         * For example, the following vertices:
+         * index [0,1,2] associated with vertex at [1,1,1]
+         * index [0,1,5] associated with vertex at [1,1,10]
+         * index [0,2,4] associated with vertex at [1,10,1]
+         * index [0,4,5] associated with vertex at [1,10,10]
+         * must be ordered like this: [0,1,2] -> [0,1,5] -> [0,4,5] -> [0,2,4]
+         */
+
+        /* print the indexSets
+        for (i in indexSet) {
+            console.log('Constraint ' + i + " : ")
+            for (j in indexSet[i]) {
+                x = indexSet[i][j];
+                console.log ('[', x[0],x[1],x[2], '], ')
+            }
+        }
+        */
+
+        /* order the indexSets. To create a polyline visualization, the
+         * vertexSets need to be ordered such that adjacent vertices are adjacent
+         * in the array. Two vertices are adjacent if they differ in just one
+         * constraint. We are going to scan the indexSet and order them in place.
+         * Once we have an ordered indexSet, we can generate the proper vertexSet.
+         */
+        for (cnstrnt = 0; cnstrnt < nrOfConstraints; cnstrnt++) {
+            indices = indexSet[cnstrnt];
+            var nrOfIndices = indices.length;
+            for (i = 0; i < nrOfIndices-1; i++) {
+                base = indices[i];
+                target = i+1;
+                for (j = i+1; j < nrOfIndices; j++) {
+                    if (this.similarity(base, indices[j]) === dimensionality-1) {
+                        target = j;
+                        break;
+                    }
+                }
+                if (target !== i+1) {
+                    this.swap(indices,i+1,target);
+                }
+            }
+        }
+        for (i in indexSet) {
+            console.log('Constraint ' + i + " : ")
+            for (j in indexSet[i]) {
+                x = indexSet[i][j];
+                console.log ('[', x[0],x[1],x[2], '], ')
+            }
+        }
+
+        /*
+         * finally, create the polylines
+         * To improve visual acuity, I am 'pushing' the vertices along
+         * the normal of the constraint half-plane so that all the half-planes
+         * are separated visually.
+         */
+        for (i in indexSet) {
+            var offset = numeric.clone(A[i]);
+            for (e in offset) {
+                offset[e] *= 0.5;
+            }
+            var polyline = [];
+            for (j in indexSet[i]) {
+                x = indexSet[i][j];
+                for (k in vertices) {
+                    index = vertices[k].index;
+                    if (index === x) {
+                        var vrtx = numeric.clone(vertices[k].vertex);
+                        for (e = 0; e < dimensionality; e++) {
+                            vrtx[e] = vrtx[e] + offset[e];
+                        }
+                        polyline.push(vrtx);
+                        break;
+                    }
+                }
+            }
+            polyline.push(polyline[0]);
+            this.pushPolyline(polyline);
+        }
+    },
+    /**
+     * similarity: calculate the similarity between two index vectors
+     * This function returns the number of indices that are shared among the two input vectors.
+     * @param i1: vector containing a set of indices
+     * @param i2: second vector to compare to
+     * @return: number of element matches between the two vectors
+     * Example: i1 = [ 0, 1, 2], i2 = [ 1, 2, 3], similarity will return 2
+     * for the sum of the matches of the elements, [1, 2].
+     * Otherwise stated, similarity calculates the cardinality of the intersection
+     * of the two input sets.
+     */
+    similarity: function(i1, i2) {
+        // count the number of similarities
+        var similarity = 0;
+        if (i1.length === i2.length) {
+            for (i in i1) {
+                for (j in i2) {
+                    if (i1[i] === i2[j]) {
+                        similarity++;
+                        break;
+                    }
+                }
+            }
+        }
+        return similarity;
     },
 
-    push: function(object) {
-	    this.polylineSet.push(object);
+    swap: function(indexSet, i1, i2) {
+        var tmp = indexSet[i1];
+        indexSet[i1] = indexSet[i2];
+        indexSet[i2] = tmp;
+    },
+
+    pushPolyline: function(polyline) {
+	    this.polylineSet.push(polyline);
 	    return this.polylineSet.length;
     }
 };

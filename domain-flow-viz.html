@@ -87,21 +87,32 @@ animate();
  **/
 function initDFM()
 {
-    /*
-    doCs.setConstraintSet(3,  [ [-1,  0,  0],
-                                [ 0, -1,  0],
-                                [ 0,  0, -1],
-                                [ 1,  0,  0],
-                                [ 0,  1,  0],
-                                [ 0,  0,  1]],
+    /* set the domain of computation through a complete Ax = b description
+    doCs.setConstraintSet([ [-1,  0,  0],
+                            [ 0, -1,  0],
+                            [ 0,  0, -1],
+                            [ 1,  0,  0],
+                            [ 0,  1,  0],
+                            [ 0,  0,  1]],
                           [-1, -1, -1, 10, 10, 10]);
     */
+    /* or through individual constraints, as they become available
+     * during parsing of the domain flow program
+     */
     doCs.setConstraint(0, [-1, 0, 0], -1);
     doCs.setConstraint(1, [ 0,-1, 0], -1);
     doCs.setConstraint(2, [ 0, 0,-1], -1);
     doCs.setConstraint(3, [ 1, 0, 0], 10);
     doCs.setConstraint(4, [ 0, 1, 0], 10);
     doCs.setConstraint(5, [ 0, 0, 1], 10);
+    /*
+     * transform the constraints to a set of polylines that can be visualized.
+     *
+     * Right now, this only works for closed convex hulls. When you have a
+     * half-plane with vertices at infinity then the 'rays' of the half-plane
+     * are not rendered. This could be fixed with a set of 'capture' planes
+     * that lie outside of the view frustum.
+     */
     doCs.generatePolylines();
 }
 
@@ -140,7 +151,8 @@ function initUI()
 	// STATS
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
-	stats.domElement.style.bottom = '0px';
+    stats.domElement.style.top = '0px';
+    stats.domElement.style.right = '0px';
 	stats.domElement.style.zIndex = 100;
 	container.appendChild( stats.domElement );
 	// LIGHT
