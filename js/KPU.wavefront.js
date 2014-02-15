@@ -1,21 +1,27 @@
-// KPU domain of computation representations
-// This is mostly convex hull discovery and vertex sorting
-//
+/**
+ * KPU computational wavefront representations
+ * This is a partial order on the lattice points that adhere
+ * to a piece-wise linear schedule.
+ */
+
 // # Code
 
 /** @namespace */
-var KPU		= KPU 		|| {};
-KPU.wavefront	= KPU.wavefront	|| {};
+var KPU		    = KPU 		    || {};
+KPU.wavefront	= KPU.wavefront	|| function() {
 
-KPU.wavefront.version = "1.0.0"
+    this.version = "1.0.0";
+}
 
-/**
- * return the number of wavefronts
- * 
- * @returns {Integer} number of wavefronts 
-*/
-KPU.wavefront.count	= function()
-{
-	return 1;
+KPU.wavefront.property = {
+    /**
+     * return the number of wavefronts
+     *
+     * @returns {Integer} number of wavefronts
+    */
+    count: function()
+    {
+        return 1;
+    }
 }
 

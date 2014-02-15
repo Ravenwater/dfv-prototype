@@ -15,11 +15,45 @@
 <script src="js/THREEx.FullScreen.js"></script>
 <script src="js/THREEx.WindowResize.js"></script>
 
+<!-- Custom shaders for particle effects -->
+<script type="x-shader/x-vertex" id="vertexshader">
+uniform float time;
+attribute float customFrequency;
+attribute vec3 customColor;
+varying vec3 vColor;
+void main()
+{
+	vColor = customColor; // set color associated to vertex; use later in fragment shader
+	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+	// option (1): draw particles at constant size on screen
+	// gl_PointSize = size;
+    // option (2): scale particles as objects in 3D space
+	gl_PointSize = (1.0 + sin( customFrequency * time )) * 1.0 * ( 300.0 / length( mvPosition.xyz ) );
+	gl_Position = projectionMatrix * mvPosition;
+}
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+uniform sampler2D texture;
+varying vec3 vColor; // colors associated to vertices; assigned by vertex shader
+void main()
+{
+	// calculates a color for the particle
+	gl_FragColor = vec4( vColor, 1.0 );
+	// sets particle texture to desired color
+	gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+}
+</script>
+<!-- end of custom shaders -->
+
 <!-- combinatorial geometry -->
 <script src="js/numeric-1.2.6.js"></script>
 <script src="js/KPU.Polyline.js"></script>
 <script src="js/KPU.domain.js"></script>
+<script src="js/KPU.adg.js"></script>
 <script src="js/KPU.wavefront.js"></script>
+<script src="js/dfm-1.0.0.js"></script>
 
 <!-- ------------------------------------------------------------ -->
 <div class="container">
@@ -56,183 +90,8 @@
     </section>
 </div>
 <div id="DFV" style="position: absolute; left:0px; top:0px"></div>
-<script>
-// MAIN
-
-// standard global variables
-var container, scene, camera, renderer, controls, stats;
-var keyboard = new THREEx.KeyboardState();
-var clock = new THREE.Clock();
-
-// custom global variables
-var points = [];
-var values = [];
-var size;
-var fullWindow = false;
-var SCREEN_WIDTH, SCREEN_HEIGHT;
-
-var doCs = new KPU.domain();
-
-initDFM();  // initialize the Domain Flow Model
-initUI();
-animate();
-
-// FUNCTIONS
-/**
- * initialize the Domain Flow Model
- * The model consists of
- * 1- a set of constraints defining the domains of computation,
- * 2- a spacetime mapping consisting of a schedule function and a space projection,
- * 3- a set of affine dependencies describing data dependencies between computational events
- **/
-function initDFM()
-{
-    /* set the domain of computation through a complete Ax = b description
-    doCs.setConstraintSet([ [-1,  0,  0],
-                            [ 0, -1,  0],
-                            [ 0,  0, -1],
-                            [ 1,  0,  0],
-                            [ 0,  1,  0],
-                            [ 0,  0,  1]],
-                          [-1, -1, -1, 10, 10, 10]);
-    */
-    /* or through individual constraints, as they become available
-     * during parsing of the domain flow program
-     */
-    doCs.setConstraint(0, [-1, 0, 0], -1);
-    doCs.setConstraint(1, [ 0,-1, 0], -1);
-    doCs.setConstraint(2, [ 0, 0,-1], -1);
-    doCs.setConstraint(3, [ 1, 0, 0], 10);
-    doCs.setConstraint(4, [ 0, 1, 0], 10);
-    doCs.setConstraint(5, [ 0, 0, 1], 10);
-    /*
-     * transform the constraints to a set of polylines that can be visualized.
-     *
-     * Right now, this only works for closed convex hulls. When you have a
-     * half-plane with vertices at infinity then the 'rays' of the half-plane
-     * are not rendered. This could be fixed with a set of 'capture' planes
-     * that lie outside of the view frustum.
-     */
-    doCs.generatePolylines();
-}
-
-function initUI()
-{
-    // SCENE
-	scene = new THREE.Scene();
-	// CAMERA
-    if (fullWindow) {
-        container = document.getElementById( 'DFV' );
-        SCREEN_WIDTH = window.innerWidth;
-        SCREEN_HEIGHT = window.innerHeight;
-    } else {
-        container = document.getElementById( 'DFV_s' );
-        SCREEN_WIDTH = container.offsetWidth;
-        SCREEN_HEIGHT = container.offsetHeight;
-    }
-    console.log('viewport = (' + SCREEN_WIDTH + "x" + SCREEN_HEIGHT + ')');
-	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
-	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
-	scene.add(camera);
-	camera.position.set(20,20,60);
-	camera.lookAt(scene.position);	
-	// RENDERER
-	if ( Detector.webgl )
-		renderer = new THREE.WebGLRenderer( {antialias:true} );
-	else
-		renderer = new THREE.CanvasRenderer(); 
-	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	container.appendChild( renderer.domElement );
-	// EVENTS
-	MyWindowResize(renderer, camera);
-	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
-	// CONTROLS
-	controls = new THREE.OrbitControls( camera, renderer.domElement );
-	// STATS
-	stats = new Stats();
-	stats.domElement.style.position = 'absolute';
-    stats.domElement.style.top = '0px';
-    stats.domElement.style.right = '0px';
-	stats.domElement.style.zIndex = 100;
-	container.appendChild( stats.domElement );
-	// LIGHT
-	var light = new THREE.PointLight(0xffffff);
-	light.position.set(0,10,0);
-	scene.add(light);
-	 
-	// Axis
-	scene.add( new THREE.AxisHelper(50) );
-
-	////////////////////////////////////////////////
-	// Visualization of the Domain of Computation //
-	////////////////////////////////////////////////
-
-	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-
-    // create the geometry object
-    var nrOfFaces = doCs.getNrOfPolylines();
-    var face;
-	for (face = 0; face < nrOfFaces; face++) {
-	    var polylineGeometry = new THREE.Geometry();
-	    var polyline = doCs.getPolyline(face); // polyline = {dim:dim, vrtxArray:vertices}
-        var vertexId;
-	    for (vertexId = 0; vertexId < polyline.vrtxArray.length; vertexId++) {
-            var v = polyline.vrtxArray[vertexId];
-            polylineGeometry.vertices.push(new THREE.Vector3(v[0], v[1], v[2]));
-	    }
-	    var polygon = new THREE.Line( polylineGeometry, lineMaterial );
-	    scene.add(polygon);
-	}
-}
-
-function MyWindowResize(renderer, camera){
-    var callback	= function(){
-        // notify the renderer of the size change
-        if (fullWindow) {
-            SCREEN_WIDTH  = window.innerWidth;
-            SCREEN_HEIGHT = window.innerHeight;
-        } else {
-            SCREEN_WIDTH  = container.offsetWidth;
-            SCREEN_HEIGHT = container.offsetHeight;
-        }
-        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        console.log('viewport = (' + SCREEN_WIDTH + "x" + SCREEN_HEIGHT + ')');
-                // update the camera
-        camera.aspect	= SCREEN_WIDTH / SCREEN_HEIGHT;
-        camera.updateProjectionMatrix();
-    }
-    // bind the resize event
-    window.addEventListener('resize', callback, false);
-    // return .stop() the function to stop watching window resize
-    return {
-        /**
-         * Stop watching window resize
-         */
-        stop	: function(){
-            window.removeEventListener('resize', callback);
-        }
-    };
-}
-
-function animate() 
-{
-    requestAnimationFrame( animate );
-	render();		
-	update();
-}
-
-function update()
-{
-	controls.update();
-	stats.update();
-}
-
-function render() 
-{
-	renderer.render( scene, camera );
-}
-
-</script>
+// application
+<script src="js/dfm-3d-model.js"></script>
 
 </body>
 </html>

@@ -6,6 +6,8 @@
 /** @namespace */
 var KPU		= KPU        || {};
 KPU.domain	= KPU.domain || function() {
+
+    this.version = "1.0.0";
     /**
      * the dimension of the constraints. It is used as a simple test
      * when adding constraints individually, so that we maintain a
@@ -14,11 +16,15 @@ KPU.domain	= KPU.domain || function() {
     this.dim = 0;
     /**
      * constrainSet captures the Ax - b <= 0 constraints in the form { A:A, b:b }
-    **/
+     **/
     this.constraintSet = {A:[], b:[]};
     /**
+     * vertices of the convex hull
+     */
+    this.vertices = [];
+    /**
      * polylineSet captures the polygon representation of each constraint
-    **/
+     **/
     this.polylineSet = [];
     /**
      * constraintSet and polylineSet are in sync, that is,
@@ -53,7 +59,6 @@ KPU.domain	= KPU.domain || function() {
 
 };
 
-KPU.domain.version = "1.0.0";
 
 KPU.domain.prototype = {
 
@@ -124,7 +129,7 @@ KPU.domain.prototype = {
         var A, b, Ai, Aj, Ak, bi, bj, bk, i, j, k, solution;
         var index = []; // constraint set index, and
         var x = [];     // solution defining the vertex of above constraints
-        var vertices = [];
+
         var vertex_id = 0;
         A = this.constraintSet.A;
         b = this.constraintSet.b;
@@ -138,11 +143,58 @@ KPU.domain.prototype = {
         }
         switch (dimensionality) {
             case 1:{
+                for (i = 0; i < nrOfConstraints; ++i) {
+                    console.log('A[',i,']= [',A[i][0], ']')
+                }
+                for (i = 0; i < nrOfConstraints; ++i) {
+                    A_v = A[i][0];
+                    b_v = b[i];
+                    if (A_v !== 0) {
+                        x = b_v/A_v;
+                        index = [i];
+                        this.vertices[vertex_id++] = { index:index, vertex:x };
+                        indexSet[i].push(index);
+                        console.log ('x = [', x, ']')
+                    }
+                    else {
+                        console.log ('A is singular for [',i,']')
+                    }
+                }
+                console.error("Can't see one dimensional constraints")
+                break;
             }
             case 2:{
+                for (i = 0; i < nrOfConstraints; ++i) {
+                    console.log('A[',i,']= [',A[i][0],A[i][1],']')
+                }
+                for (i = 0; i < nrOfConstraints-1; ++i) {
+                    Ai = A[i];
+                    bi = b[i];
+                    for (j = i + 1; j < nrOfConstraints; ++j) {
+                        Aj = A[j];
+                        bj = b[j];
+                        A_v = [ Ai, Aj];
+                        b_v = [ bi, bj];
+                        var solution = KPU.LU(A_v);
+                        if (solution.fullRank) {
+                            x = numeric.LUsolve(solution,b_v);
+                            index = [i, j];
+                            this.vertices[vertex_id++] = { index:index, vertex:x };
+                            indexSet[i].push(index);
+                            indexSet[j].push(index);
+                            console.log ('x[] = [', x[0],x[1], ']')
+                        }
+                        else {
+                            console.log ('A is singular for [',i,j,']')
+                        }
+                    }
+                }
+                break;
             }
             case 3: {
-                // for (i = 0; i < nrOfConstraints; ++i)console.log('A[',i,']= [',A[i][0],A[i][1],A[i][2],']')
+                for (i = 0; i < nrOfConstraints; ++i) {
+                    console.log('A[',i,']= [',A[i][0],A[i][1],A[i][2],']')
+                }
                 for (i = 0; i < nrOfConstraints-2; ++i) {
                     Ai = A[i];
                     bi = b[i];
@@ -158,7 +210,7 @@ KPU.domain.prototype = {
                             if (solution.fullRank) {
                                 x = numeric.LUsolve(solution,b_v);
                                 index = [i, j, k];
-                                vertices[vertex_id++] = { index:index, vertex:x };
+                                this.vertices[vertex_id++] = { index:index, vertex:x };
                                 indexSet[i].push(index);
                                 indexSet[j].push(index);
                                 indexSet[k].push(index);
@@ -173,11 +225,12 @@ KPU.domain.prototype = {
             }
         }
 
-        for ( i in vertices) {
-            console.log(vertices[i].index + ' associated with ' + vertices[i].vertex);
+        for ( i in this.vertices) {
+            console.log(this.vertices[i].index + ' associated with ' + this.vertices[i].vertex);
         }
 
-        /* In order to create a proper visualization of each half plane constraint
+        /**
+         * In order to create a proper visualization of each half plane constraint
          * we need to order the index sets for each vertex in such a way that two
          * vertices are adjacent if and only if they differ in just one constraint.
          * For example, the following vertices:
@@ -243,19 +296,19 @@ KPU.domain.prototype = {
             var polyline = [];
             for (j in indexSet[i]) {
                 x = indexSet[i][j];
-                for (k in vertices) {
-                    index = vertices[k].index;
+                for (k in this.vertices) {
+                    index = this.vertices[k].index;
                     if (index === x) {
-                        var vrtx = numeric.clone(vertices[k].vertex);
+                        var vertex = numeric.clone(this.vertices[k].vertex);
                         for (e = 0; e < dimensionality; e++) {
-                            vrtx[e] = vrtx[e] + offset[e];
+                            vertex[e] = vertex[e] + offset[e];
                         }
-                        polyline.push(vrtx);
+                        polyline.push(vertex);
                         break;
                     }
                 }
             }
-            polyline.push(polyline[0]);
+            polyline.push(polyline[0]); // to create a closed vertex set
             this.pushPolyline(polyline);
         }
     },
