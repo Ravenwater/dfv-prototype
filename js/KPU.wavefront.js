@@ -9,8 +9,12 @@
 /** @namespace */
 var KPU		    = KPU 		    || {};
 KPU.wavefront	= KPU.wavefront	|| function() {
-
+    /**
+     * version identifier
+     * @type {string} release.major.minor
+     */
     this.version = "1.0.0";
+
 }
 
 KPU.wavefront.property = {

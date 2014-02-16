@@ -51,7 +51,7 @@ function initDFM(doCs, adg, wavefronts)
      * Right now, this only works for closed convex hulls. When you have a
      * half-plane with vertices at infinity then the 'rays' of the half-plane
      * are not rendered. This could be fixed with a set of 'capture' planes
-     * that lie outside of the view frustum.
+     * that lie outside of the view frustum, much like clipping planes in OpenGL.
      */
     doCs.generatePolylines();
 

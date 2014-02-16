@@ -53,7 +53,7 @@ function initUI()
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     container.appendChild( renderer.domElement );
     // EVENTS
-    MyWindowResize(renderer, camera);
+    DfmWindowResize(renderer, camera);
     THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
     // CONTROLS
     controls = new THREE.OrbitControls( camera, renderer.domElement );
@@ -117,14 +117,6 @@ function initUI()
     // Visualization of the computational event evolution //
     ////////////////////////////////////////////////////////
 
-    //var cubeGeometry = new THREE.CubeGeometry( 10, 10, 10, 10, 10, 10 );
-    var wavefront = new THREE.Geometry();
-    wavefront.name = 'wavefront';
-    wavefront.vertices.push( new THREE.Vector3(1,1,1) );
-    wavefront.vertices.push( new THREE.Vector3(1,1,2) );
-    wavefront.vertices.push( new THREE.Vector3(1,2,1) );
-    wavefront.vertices.push( new THREE.Vector3(2,1,1) );
-    wavefront.verticesNeedUpdate = true;
     var discTexture = THREE.ImageUtils.loadTexture( './images/disc.png' );
 
     // values that are constant for all particles during a draw call
@@ -142,32 +134,92 @@ function initUI()
         customFrequency: { type: 'f', value: [] }
     };
 
-    // assign values to attributes, one for each vertex of the geometry
-    for( var v = 0; v < wavefront.vertices.length; v++ )
-    {
-        customAttributes.customColor.value[ v ] = new THREE.Color( 0xffffff );
-        customAttributes.customFrequency.value[ v ] = 1;
+    var wavefrontView = new THREE.Geometry();
+    wavefrontView.name = 'wavefront';
+    var I = 11;
+    var J = 11;
+    var K = 11;
+    var recurrenceColor = [ 0xff0000, 0x00ff00, 0x0000ff];
+    var v = 0;
+    var index = [];
+    // recurrence equation a(i,j,k) = a(i,j-1,k)
+    var recurrence = 0;
+    for (i = 1; i < I; i++) {
+        for (j = 1; j < J; j++) {
+            for (k = 1; k < K; k++) {
+                index = [i,j,k];
+                wavefrontView.vertices.push( new THREE.Vector3(i,j+0.5,k) );
+                // assign values to attributes, one for each vertex of the geometry
+                customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
+                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                v++;
+            }
+        }
     }
+    // recurrence equation b(i,j,k) = b(i-1,j,k)
+    recurrence = 1;
+    for (i = 1; i < I; i++) {
+        for (j = 1; j < J; j++) {
+            for (k = 1; k < K; k++) {
+                index = [i,j,k];
+                wavefrontView.vertices.push( new THREE.Vector3(i+0.5,j,k) );
+                // assign values to attributes, one for each vertex of the geometry
+                customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
+                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                v++;
+            }
+        }
+    }
+    // recurrence equation c(i,j,k) = c(i,j,k-1)
+    recurrence = 2;
+    for (i = 1; i < I; i++) {
+        for (j = 1; j < J; j++) {
+            for (k = 1; k < K; k++) {
+                index = [i,j,k];
+                wavefrontView.vertices.push( new THREE.Vector3(i,j,k+0.5) );
+                // assign values to attributes, one for each vertex of the geometry
+                customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
+                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                v++;
+            }
+        }
+    }
+    wavefrontView.verticesNeedUpdate = true;
 
     var shaderMaterial = new THREE.ShaderMaterial(
         {
-            uniforms: 		customUniforms,
+            uniforms: 		this.customUniforms,
             attributes:		customAttributes,
             vertexShader:   document.getElementById( 'vertexshader' ).textContent,
             fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
             transparent:    true,
-            alphaTest:      0.5  // if having transparency issues, try including: alphaTest: 0.5,
-            // blending: THREE.AdditiveBlending, depthTest: false,
+            alphaTest:      0.5,  // if having transparency issues, try including: alphaTest: 0.5,
+            blending:       THREE.AdditiveBlending,
+            // depthTest:      true,
         });
 
-    var particleCube = new THREE.ParticleSystem( wavefront, shaderMaterial );
-    particleCube.position.set(0, 0, 0);
-    particleCube.dynamic = true;
-    particleCube.sortParticles = true;
-    scene.add( particleCube );
+    var particleSystem = new THREE.ParticleSystem( wavefrontView, shaderMaterial );
+    particleSystem.position.set(0, 0, 0);
+    particleSystem.dynamic = true;
+    particleSystem.sortParticles = true;
+    scene.add( particleSystem );
 }
 
-
+function schedule( recurrence, index ) {
+    var tau = [1,1,1];
+    var seqNr = numeric.dot(tau, index);
+    return seqNr;
+}
+/**
+ * Draw a text sprite. The benefit of a sprite is that it is a 2D image and thus continues
+ * to keep facing the eye as the 3D model view point is manipulated.
+ *
+ * CURRENTLY NOT USED YET: will be used for index point inspection
+ *
+ * @param message
+ * @param parameters
+ * @returns {THREE.Sprite}
+ */
 function makeTextSprite( message, parameters ) {
     if ( parameters === undefined ) parameters = {};
 
@@ -227,7 +279,15 @@ function makeTextSprite( message, parameters ) {
     return sprite;
 }
 
-function MyWindowResize(renderer, camera) {
+/**
+ * Function hooked to the window redraw event
+ *
+ * @param renderer
+ * @param camera
+ * @returns {{stop: stop}}
+ * @constructor
+ */
+function DfmWindowResize(renderer, camera) {
     var callback	= function(){
         // notify the renderer of the size change
         if (fullWindow) {

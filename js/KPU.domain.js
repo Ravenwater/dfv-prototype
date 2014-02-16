@@ -5,7 +5,7 @@
 
 /** @namespace */
 var KPU		= KPU        || {};
-KPU.domain	= KPU.domain || function() {
+KPU.domain = KPU.domain || function () {
 
     this.version = "1.0.0";
     /**
@@ -17,7 +17,7 @@ KPU.domain	= KPU.domain || function() {
     /**
      * constrainSet captures the Ax - b <= 0 constraints in the form { A:A, b:b }
      **/
-    this.constraintSet = {A:[], b:[]};
+    this.constraintSet = {A: [], b: []};
     /**
      * vertices of the convex hull
      */
@@ -55,7 +55,7 @@ KPU.domain	= KPU.domain || function() {
      * [1,5,6] == [1,N,N]
      * The polyline associated by the constraint at index 1 is defined
      * by the sequence: [1,2,3] -> [1,2,6] -> [1,5,6] -> [1,5,3] -> [1,2,3]
-    **/
+     **/
 
 };
 
@@ -96,6 +96,11 @@ KPU.domain.prototype = {
                 console.error("inconsistent dimension of new constraint: constraint is ignored");
             }
     },
+    /**
+     * get the constraint set at index id
+     * @param id
+     * @returns {*}
+     */
     getConstraint: function ( id ) {
 	    return this.constraintSet.A[id];
     },
@@ -108,6 +113,11 @@ KPU.domain.prototype = {
     getNrOfPolylines: function() {
         return this.polylineSet.length;
     },
+    /**
+     * get the polyline at index id
+     * @param id
+     * @returns {{dim: *, vrtxArray: *}}
+     */
     getPolyline: function ( id ) {
 	    return {
             dim: this.dim,
@@ -125,14 +135,17 @@ KPU.domain.prototype = {
          * accumulate the vertices with enough information
          * so that we can sort them in a second pass into
          * a set of polylines, one for each constraint.
+         * This sorting is necessary to identify adjacent vertices
+         * so that we can easily construct a 3D polyline defined
+         * by a sequence of connected vertices.
          */
-        var A, b, Ai, Aj, Ak, bi, bj, bk, i, j, k, solution;
+        var Ai, Aj, Ak, bi, bj, bk, i, j, k, solution;
         var index = []; // constraint set index, and
         var x = [];     // solution defining the vertex of above constraints
 
         var vertex_id = 0;
-        A = this.constraintSet.A;
-        b = this.constraintSet.b;
+        var A = this.constraintSet.A;
+        var b = this.constraintSet.b;
         var nrOfConstraints = A.length;
         var dimensionality = A[0].length;
         var A_v, b_v; // the matrix and vector that define a vertex of the convex hull
@@ -175,7 +188,7 @@ KPU.domain.prototype = {
                         bj = b[j];
                         A_v = [ Ai, Aj];
                         b_v = [ bi, bj];
-                        var solution = KPU.LU(A_v);
+                        solution = KPU.LU(A_v);
                         if (solution.fullRank) {
                             x = numeric.LUsolve(solution,b_v);
                             index = [i, j];
@@ -206,7 +219,7 @@ KPU.domain.prototype = {
                             bk = b[k];
                             A_v = [ Ai, Aj, Ak];
                             b_v = [ bi, bj, bk];
-                            var solution = KPU.LU(A_v);
+                            solution = KPU.LU(A_v);
                             if (solution.fullRank) {
                                 x = numeric.LUsolve(solution,b_v);
                                 index = [i, j, k];
@@ -257,12 +270,12 @@ KPU.domain.prototype = {
          * constraint. We are going to scan the indexSet and order them in place.
          * Once we have an ordered indexSet, we can generate the proper vertexSet.
          */
-        for (cnstrnt = 0; cnstrnt < nrOfConstraints; cnstrnt++) {
-            indices = indexSet[cnstrnt];
+        for (var cnstrnt = 0; cnstrnt < nrOfConstraints; cnstrnt++) {
+            var indices = indexSet[cnstrnt];
             var nrOfIndices = indices.length;
             for (i = 0; i < nrOfIndices-1; i++) {
-                base = indices[i];
-                target = i+1;
+                var base = indices[i];
+                var target = i+1;
                 for (j = i+1; j < nrOfIndices; j++) {
                     if (this.similarity(base, indices[j]) === dimensionality-1) {
                         target = j;
@@ -322,6 +335,9 @@ KPU.domain.prototype = {
      * for the sum of the matches of the elements, [1, 2].
      * Otherwise stated, similarity calculates the cardinality of the intersection
      * of the two input sets.
+     * I am using the O(n^2) brute force method of enumerating both sets.
+     * We can get away with that as the index sets are relatively small, typically
+     * less than 3 element triples and sets less than 5 or 6 elements.
      */
     similarity: function(i1, i2) {
         // count the number of similarities
@@ -351,6 +367,13 @@ KPU.domain.prototype = {
     }
 };
 
+/**
+ * Straight forward LU decomposition with pivoting
+ * @param A
+ * @param bInplace
+ * @returns {{LU: *, P: Array, fullRank: boolean}}
+ * @constructor
+ */
 KPU.LU = function(A, bInplace) {
     bInplace = bInplace || false;
 
@@ -409,50 +432,4 @@ KPU.LU = function(A, bInplace) {
         fullRank: fullRank
     }
 }
-/**
- *
-	
-	var polylineGeometry = new THREE.Geometry();
-	var vertices = polylineGeometry.vertices;
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	vertices.push( new THREE.Vector3(  10,  1, 1 ) );
-	vertices.push( new THREE.Vector3(  10,  1, 10 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 10 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-	var polyline = new THREE.Line( polylineGeometry, lineMaterial );
-	scene.add(polyline);
-	
-	var polylineGeometry = new THREE.Geometry();
-	var vertices = polylineGeometry.vertices;
-	vertices.push( new THREE.Vector3(   1, 10, 1 ) );
-	vertices.push( new THREE.Vector3(  10, 10, 1 ) );
-	vertices.push( new THREE.Vector3(  10, 10, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 1 ) );
-	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-	var polyline = new THREE.Line( polylineGeometry, lineMaterial );
-	scene.add(polyline);
-	
-	var polylineGeometry = new THREE.Geometry();
-	var vertices = polylineGeometry.vertices;
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 1 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-	var polyline = new THREE.Line( polylineGeometry, lineMaterial );
-	scene.add(polyline);
-	
-	var polylineGeometry = new THREE.Geometry();
-	var vertices = polylineGeometry.vertices;
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 10 ) );
-	vertices.push( new THREE.Vector3(   1, 10, 1 ) );
-	vertices.push( new THREE.Vector3(   1,  1, 1 ) );
-	var lineMaterial =  new THREE.LineBasicMaterial( {color: 0xffffff} );
-	var polyline = new THREE.Line( polylineGeometry, lineMaterial );
-	scene.add(polyline);
-**/
+
