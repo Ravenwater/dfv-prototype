@@ -122,8 +122,9 @@ function initUI()
     // values that are constant for all particles during a draw call
     this.customUniforms =
     {
-        time:	 { type: "f", value: 1.0 },
-        texture: { type: "t", value: discTexture }
+        cardinality:    { type: "f", value: 33.0 },
+        time:	        { type: "f", value: 1.0 },
+        texture:        { type: "t", value: discTexture }
     };
 
     // properties that may vary from particle to particle. only accessible in vertex shaders!
@@ -131,7 +132,7 @@ function initUI()
     var customAttributes =
     {
         customColor:	 { type: "c", value: [] },
-        customFrequency: { type: 'f', value: [] }
+        schedule:        { type: 'f', value: [] }
     };
 
     var wavefrontView = new THREE.Geometry();
@@ -151,7 +152,7 @@ function initUI()
                 wavefrontView.vertices.push( new THREE.Vector3(i,j+0.5,k) );
                 // assign values to attributes, one for each vertex of the geometry
                 customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
-                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                customAttributes.schedule.value[ v ] = schedule(recurrence,index);
                 v++;
             }
         }
@@ -165,7 +166,7 @@ function initUI()
                 wavefrontView.vertices.push( new THREE.Vector3(i+0.5,j,k) );
                 // assign values to attributes, one for each vertex of the geometry
                 customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
-                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                customAttributes.schedule.value[ v ] = schedule(recurrence,index);
                 v++;
             }
         }
@@ -179,7 +180,7 @@ function initUI()
                 wavefrontView.vertices.push( new THREE.Vector3(i,j,k+0.5) );
                 // assign values to attributes, one for each vertex of the geometry
                 customAttributes.customColor.value[ v ] = new THREE.Color( recurrenceColor[recurrence] );
-                customAttributes.customFrequency.value[ v ] = schedule(recurrence,index);
+                customAttributes.schedule.value[ v ] = schedule(recurrence,index);
                 v++;
             }
         }

@@ -18,7 +18,8 @@
 <!-- Custom shaders for particle effects -->
 <script type="x-shader/x-vertex" id="vertexshader">
 uniform float time;
-attribute float customFrequency;
+uniform float cardinality;
+attribute float schedule;
 attribute vec3 customColor;
 varying vec3 vColor;
 void main()
@@ -26,10 +27,17 @@ void main()
 	vColor = customColor; // set color associated to vertex; use later in fragment shader
 	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-	// option (1): draw particles at constant size on screen
-	// gl_PointSize = size;
-    // option (2): scale particles as objects in 3D space
-	gl_PointSize = (1.0 + sin( customFrequency * time )) * 1.0 * ( 300.0 / length( mvPosition.xyz ) );
+
+    // scale particles as objects in 3D space and modulate them with a sine so that
+    // they blossom when computational activity is at the vertex, and then attenuate
+    // when the wavefront passes through.
+	float period = mod(time, cardinality); // set range = [0, cardinality]
+	if (period > schedule - 1.0 && period < schedule + 1.0) {
+	    gl_PointSize = (1.33333 + sin((period - schedule)*3.14 + 1.57) ) * ( 300.0 / length( mvPosition.xyz ) );
+	} else {
+	    gl_PointSize = ( 100.0 / length( mvPosition.xyz ) );
+	}
+
 	gl_Position = projectionMatrix * mvPosition;
 }
 </script>
