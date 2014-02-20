@@ -27,13 +27,12 @@ void main()
 	vColor = customColor; // set color associated to vertex; use later in fragment shader
 	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-
     // scale particles as objects in 3D space and modulate them with a sine so that
     // they blossom when computational activity is at the vertex, and then attenuate
     // when the wavefront passes through.
 	float period = mod(time, cardinality); // set range = [0, cardinality]
 	if (period > schedule - 1.0 && period < schedule + 1.0) {
-	    gl_PointSize = (1.33333 + sin((period - schedule)*3.14 + 1.57) ) * ( 300.0 / length( mvPosition.xyz ) );
+	    gl_PointSize = (1.5 + sin((period - schedule)*3.14 + 1.57) ) * ( 200.0 / length( mvPosition.xyz ) );
 	} else {
 	    gl_PointSize = ( 100.0 / length( mvPosition.xyz ) );
 	}

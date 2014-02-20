@@ -117,7 +117,7 @@ function initUI()
     // Visualization of the computational event evolution //
     ////////////////////////////////////////////////////////
 
-    var discTexture = THREE.ImageUtils.loadTexture( './images/disc.png' );
+    var discTexture = THREE.ImageUtils.loadTexture( 'images/disc.png' );
 
     // values that are constant for all particles during a draw call
     this.customUniforms =
