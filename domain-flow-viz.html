@@ -54,25 +54,35 @@ void main()
 </script>
 <!-- end of custom shaders -->
 
-<!-- combinatorial geometry -->
+<!-- graph visualization for RDG -->
+<script type="text/javascript" src="js/vis.js"></script>
+<!-- linear algebra -->
 <script src="js/numeric-1.2.6.js"></script>
+<!-- combinatorial geometry for KPU DoCs -->
 <script src="js/KPU.Polyline.js"></script>
 <script src="js/KPU.domain.js"></script>
 <script src="js/KPU.adg.js"></script>
 <script src="js/KPU.wavefront.js"></script>
+<!-- domain flow model -->
 <script src="js/dfm-1.0.0.js"></script>
 
 <!-- ------------------------------------------------------------ -->
 <div class="container">
-
-    <section class="section_border code_section">
+    <section class="section_border lhs_section">
+        <section id="program" class="section_border code_section">
+        <h1>Domain Flow Program</h1>
         <pre>
- system( (i,j,k) | 1 <= i,j,k <= N ) {
-    a(i,j,k) = a(i-1,j,k);
-    b(i,j,k) = b(i,j-1,k);
-    c(i,j,k) = a(i-1,j,k)*b(i,j-1,k) + c(i,j,k-1);
- }
+system( (i,j,k) | 1 <= i,j,k <= N ) {
+a(i,j,k) = a(i-1,j,k);
+b(i,j,k) = b(i,j-1,k);
+c(i,j,k) = a(i-1,j,k)*b(i,j-1,k) +
+            c(i,j,k-1);
+}
         </pre>
+        </section>
+        <section id="rdg" class="section_border rdg_section">
+            <h1>Reduced Dependency Graph</h1>
+        </section>
     </section>
 
     <section id="DFV_s" class="section_border viz_section"></section>
@@ -97,8 +107,14 @@ void main()
     </section>
 </div>
 <div id="DFV" style="position: absolute; left:0px; top:0px"></div>
-// application
+<!-- application code -->
 <script src="js/dfm-3d-model.js"></script>
-
+<script type="text/javascript">
+    var container = document.getElementById('rdg');
+    var data = {
+        dot: 'digraph {node[shape=circle, size=10]; a -> a; a -> c; c -> c; b -> c; b -> b }'
+    };
+    var graph = new vis.Graph(container, data);
+</script>
 </body>
 </html>

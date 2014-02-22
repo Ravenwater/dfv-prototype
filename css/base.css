@@ -15,16 +15,30 @@ body
     border-style: groove;
     border-width: 2px;
 }
-.code_section {
+.lhs_section {
     -webkit-flex: initial;
     flex: initial;
     width: 300px;
     min-width: 200px;
 }
+.code_section {
+    -webkit-flex: initial;
+    flex: initial;
+    width: 300px;
+    min-width: 200px;
+    height: 200px;
+}
+.rdg_section {
+     -webkit-flex: initial;
+     flex: initial;
+     width: 300px;
+     min-width: 200px;
+     height: 300px;
+ }
 .viz_section {
     -webkit-flex: 1;
     flex: 1;
-    height: 600px;
+    height: 500px;
 }
 .debug_section {
     -webkit-flex: 1;
