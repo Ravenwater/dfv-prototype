@@ -5,7 +5,7 @@
 
 /** @namespace */
 var KPU		= KPU        || {};
-KPU.domain = KPU.domain || function () {
+KPU.Domain = KPU.Domain || function () {
 
     this.version = "1.0.0";
     /**
@@ -60,7 +60,7 @@ KPU.domain = KPU.domain || function () {
 };
 
 
-KPU.domain.prototype = {
+KPU.Domain.prototype = {
 
     /**
      * set the complete constraint set defined by Ax <= b
@@ -239,19 +239,22 @@ KPU.domain.prototype = {
         }
 
         for ( i in this.vertices) {
-            console.log(this.vertices[i].index + ' associated with ' + this.vertices[i].vertex);
+            console.log('index set [' + this.vertices[i].index + '] associated with vertex at [' + this.vertices[i].vertex + ']');
         }
 
         /**
          * In order to create a proper visualization of each half plane constraint
          * we need to order the index sets for each vertex in such a way that two
          * vertices are adjacent if and only if they differ in just one constraint.
-         * For example, the following vertices:
+         * For example, the following vertex set:
          * index [0,1,2] associated with vertex at [1,1,1]
          * index [0,1,5] associated with vertex at [1,1,10]
          * index [0,2,4] associated with vertex at [1,10,1]
          * index [0,4,5] associated with vertex at [1,10,10]
          * must be ordered like this: [0,1,2] -> [0,1,5] -> [0,4,5] -> [0,2,4]
+         * so that we have a polyline:[1,1,1] -> [1,1,10] -> [1,10,10] -> [1,10,1] { -> [1,1,1] }
+         * The last {...} is there implicitly to complete the polyline representation
+         * of the constraint with label '0'.
          */
 
         /* print the indexSets
@@ -297,14 +300,14 @@ KPU.domain.prototype = {
 
         /*
          * finally, create the polylines
-         * To improve visual acuity, I am 'pushing' the vertices along
+         * To improve visual acuity, I am 'pushing' the vertices out along
          * the normal of the constraint half-plane so that all the half-planes
          * are separated visually.
          */
         for (i in indexSet) {
             var offset = numeric.clone(A[i]);
             for (e in offset) {
-                offset[e] *= 0.5;
+                offset[e] *= 0.5;  // half a lattice cell distance
             }
             var polyline = [];
             for (j in indexSet[i]) {
@@ -321,7 +324,7 @@ KPU.domain.prototype = {
                     }
                 }
             }
-            polyline.push(polyline[0]); // to create a closed vertex set
+            polyline.push(polyline[0]); // loop to the first vertex to create a closed vertex set
             this.pushPolyline(polyline);
         }
     },

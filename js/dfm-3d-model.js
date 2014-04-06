@@ -16,11 +16,12 @@ var size;
 var fullWindow = false;
 var SCREEN_WIDTH, SCREEN_HEIGHT;
 
-var doCs = new KPU.domain();
-var adg = new KPU.adg();
-var wavefronts = new KPU.wavefront();
+var doCs = new KPU.Domain();
+var adg = new KPU.AffineDependenceGraph();
+var wavefronts = new KPU.Wavefront();
+var fabric = new KPU.Fabric();
 
-initDFM(doCs, adg, wavefronts);  // initialize the Domain Flow Model
+initDFM(doCs, adg, wavefronts, fabric);  // initialize the Domain Flow Model
 initUI();
 animate();
 
@@ -114,6 +115,19 @@ function initUI()
     }
 
     ////////////////////////////////////////////////////////
+    // Visualization of the Fabric extent                 //
+    ////////////////////////////////////////////////////////
+
+    var fabricPolyline = fabric.getPolyline();
+    var fabricGeometry = new THREE.Geometry();
+    for (vertexId = 0; vertexId < fabricPolyline.vertices.length; vertexId++) {
+        var v = fabricPolyline.v(vertexId);
+        fabricGeometry.vertices.push(new THREE.Vector3(v[0], v[1], v[2]));
+    }
+    var fabricPolygon = new THREE.Line( fabricGeometry, lineMaterial );
+    scene.add(fabricPolygon);
+
+    ////////////////////////////////////////////////////////
     // Visualization of the computational event evolution //
     ////////////////////////////////////////////////////////
 
@@ -136,7 +150,7 @@ function initUI()
     };
 
     var wavefrontView = new THREE.Geometry();
-    wavefrontView.name = 'wavefront';
+    wavefrontView.name = 'Wavefront';
     var I = 11;
     var J = 11;
     var K = 11;
@@ -196,7 +210,7 @@ function initUI()
             transparent:    true,
             alphaTest:      0.5,  // if having transparency issues, try including: alphaTest: 0.5,
             blending:       THREE.AdditiveBlending,
-            // depthTest:      true,
+            depthTest:      true
         });
 
     var particleSystem = new THREE.ParticleSystem( wavefrontView, shaderMaterial );
@@ -270,7 +284,7 @@ function makeTextSprite( message, parameters ) {
     context.fillText( message, borderThickness, fontsize + borderThickness);
 
     // canvas contents will be used for a texture
-    var texture = new THREE.Texture(canvas)
+    var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
 
     var spriteMaterial = new THREE.SpriteMaterial(

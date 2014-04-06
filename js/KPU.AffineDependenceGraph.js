@@ -9,7 +9,7 @@ var KPU 	 = KPU    	    || {};
 KPU.DgVertex = KPU.DgVertex || function(name) {
     this.name = name;
 };
-KPU.adg	     = KPU.adg	    || function() {
+KPU.AffineDependenceGraph	     = KPU.AffineDependenceGraph	    || function() {
     this.vertices = [];
 };
 
@@ -22,7 +22,7 @@ KPU.DgVertex.prototype = {
     }
 };
 
-KPU.adg.prototype = {
+KPU.AffineDependenceGraph.prototype = {
     v: function(index) {
         return this.vertices[index];
     },

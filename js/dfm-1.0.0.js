@@ -5,7 +5,7 @@
  * 2- a spacetime mapping consisting of a schedule function and a space projection,
  * 3- a set of affine dependencies describing data dependencies between computational events
  **/
-function initDFM(doCs, adg, wavefronts)
+function initDFM(doCs, adg, wavefronts, fabric)
 {
     /* or through individual constraints, as they become available
      * during parsing of the domain flow program
@@ -60,5 +60,7 @@ function initDFM(doCs, adg, wavefronts)
     adg.setVertex(1, new KPU.DgVertex('b_recurrence'));
     adg.setVertex(2, new KPU.DgVertex('c_recurrence'));
 
-
+    fabric.generateExtent(1);
+    fabric.generateExtent(2);
+    fabric.generateExtent(3);
 }

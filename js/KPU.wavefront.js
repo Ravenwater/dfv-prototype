@@ -8,7 +8,7 @@
 
 /** @namespace */
 var KPU		    = KPU 		    || {};
-KPU.wavefront	= KPU.wavefront	|| function() {
+KPU.Wavefront	= KPU.Wavefront	|| function() {
     /**
      * version identifier
      * @type {string} release.major.minor
@@ -17,7 +17,7 @@ KPU.wavefront	= KPU.wavefront	|| function() {
 
 }
 
-KPU.wavefront.property = {
+KPU.Wavefront.property = {
     /**
      * return the number of wavefronts
      *

@@ -60,9 +60,10 @@ void main()
 <script src="js/numeric-1.2.6.js"></script>
 <!-- combinatorial geometry for KPU DoCs -->
 <script src="js/KPU.Polyline.js"></script>
-<script src="js/KPU.domain.js"></script>
-<script src="js/KPU.adg.js"></script>
-<script src="js/KPU.wavefront.js"></script>
+<script src="js/KPU.Domain.js"></script>
+<script src="js/KPU.AffineDependenceGraph.js"></script>
+<script src="js/KPU.Wavefront.js"></script>
+<script src="js/KPU.Fabric.js"></script>
 <!-- domain flow model -->
 <script src="js/dfm-1.0.0.js"></script>
 
@@ -90,12 +91,12 @@ c(i,j,k) = a(i-1,j,k)*b(i,j-1,k) +
 <div class="container">
     <section class="section_border space_section">
         <p>
-            Space projection control
+            Space projection = [1 1 1]T
         </p>
     </section>
     <section class="section_border time_section">
         <p>
-            Time/schedule control
+            Time/schedule = [1 1 1]T
         </p>
     </section>
 </div>
